@@ -1,6 +1,6 @@
 from extensions import db
 
-class EmotionModel(db.Model):
+class Emotion(db.Model):
     __tablename__ = "emotions"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -13,4 +13,4 @@ class EmotionModel(db.Model):
     fear = db.Column(db.Boolean, default=False, nullable=False)
     surprise = db.Column(db.Boolean, default=False, nullable=False)
 
-    entry = db.relationship("EntryModel", back_populates="emotions", lazy=True)
+    entry = db.relationship("Entry", back_populates="emotions", lazy=True)

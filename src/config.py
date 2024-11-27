@@ -2,25 +2,13 @@ import os
 from dotenv import load_dotenv
 
 class Config:
-    pass
+    def __init__(self):
+        load_dotenv()
 
-class DevelopmentConfig(Config):
-    DEBUG = True
+        self.SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI', 'postgresql://username:password@localhost:5432/mydatabase')
+        self.SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-class TestingConfig(Config):
-    DEBUG = True
-
-class ProductionConfig(Config):
-    DEBUG = False
-
+        self.SECRET_KEY = os.getenv('SECRET_KEY', 'your_secret_key')
 
 def get_config():
-    env = os.getenv("FLASK_ENV", "development")
-    if env == "development":
-        return DevelopmentConfig
-    elif env == "testing":
-        return TestingConfig
-    elif env == "production":
-        return ProductionConfig
-    else:
-        return Config
+    return Config()

@@ -1,7 +1,7 @@
 from sqlalchemy.dialects.postgresql import ARRAY
 from extensions import db
 
-class EventModel(db.Model):
+class Event(db.Model):
     __tablename__ = "events"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -15,4 +15,4 @@ class EventModel(db.Model):
     subjects = db.Column(ARRAY(db.String), nullable=False, default=list)
     adjectives = db.Column(ARRAY(db.String), nullable=False, default=list)
 
-    entry = db.relationship("EntryModel", back_populates="events", lazy=True)
+    entry = db.relationship("Entry", back_populates="events", lazy=True)
