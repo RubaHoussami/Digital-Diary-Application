@@ -1,21 +1,26 @@
 import os
+from dotenv import load_dotenv
 
 class Config:
-    # Database configuration
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://username:password@localhost:5432/mydatabase')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    pass
 
-    # Spell checker model path
-    SPELL_CHECKER_MODEL_PATH = os.getenv('SPELL_CHECKER_MODEL_PATH', '/path/to/spell_checker/models')
+class DevelopmentConfig(Config):
+    DEBUG = True
 
-    # Secret key for session management or other security features
-    SECRET_KEY = os.getenv('SECRET_KEY', 'your_secret_key')
+class TestingConfig(Config):
+    DEBUG = True
 
-    # Logger configuration
-    LOG_FILE_PATH = os.getenv('LOG_FILE_PATH', 'app.log')
-    LOG_LEVEL = os.getenv('LOG_LEVEL', 'DEBUG')
+class ProductionConfig(Config):
+    DEBUG = False
 
-    # Other configurations can be added here as needed
 
-# Example of how to use the config
-config = Config()
+def get_config():
+    env = os.getenv("FLASK_ENV", "development")
+    if env == "development":
+        return DevelopmentConfig
+    elif env == "testing":
+        return TestingConfig
+    elif env == "production":
+        return ProductionConfig
+    else:
+        return Config
