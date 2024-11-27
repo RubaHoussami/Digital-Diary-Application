@@ -1,5 +1,5 @@
-from src.crew.base_data_sanitizer import BaseDataSanitizer
-from src.crew.spell_checker import SpellChecker
+from src.crew.base.base_data_sanitizer import BaseDataSanitizer
+from src.crew.active.spell_checker import SpellChecker
 from src.logger import logger
 
 
@@ -18,9 +18,6 @@ class BERTDataSanitizer(BaseDataSanitizer):
         data.replace("an", "")
         data.replace("and", "")
         data.replace("or", "")
-        pass
-
-    def tokenize(self, data):
         pass
 
     def validate(self, data):

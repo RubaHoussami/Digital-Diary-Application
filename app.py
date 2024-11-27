@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-from src.extensions import swagger
+from src.extensions import db, migrate, jwt, cors, swagger
 from src.logger import logger
 #from src.config import Config
 
@@ -7,6 +7,10 @@ def create_app():
     app = Flask(__name__)
     #config = Config()
 
+    db.init_app(app)
+    migrate.init_app(app, db)
+    jwt.init_app(app)
+    cors.init_app(app)
     swagger.init_app(app)
 
     return app
