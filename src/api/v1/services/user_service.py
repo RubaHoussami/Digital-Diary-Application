@@ -1,8 +1,10 @@
 from flask_jwt_extended import create_access_token, create_refresh_token
 from werkzeug.exceptions import NotFound, Unauthorized
+
 from src.api.v1.utils.get_time import get_utc_now
+
 from src.api.v1.models.UserModel import User
-from extensions import db
+
 
 class UserService:
     def __init__(self, db_session):
@@ -61,12 +63,13 @@ class UserService:
         return {'access': access_token, 'refresh': refresh_token}
 
     def login(self, data):
-        if 'username' in data:
-            identifier = data['username']
-            user = self.get_user_by_username(identifier)
-        else:
-            identifier = data['email']
-            user = self.get_user_by_email(identifier)
+        identifier = data['identifier']
+        user = self._get_user_by_username(identifier)
+
+        if not user:
+            user = self._get_user_by_email(identifier)
+        if not user:
+            raise NotFound(f'User with identifier {identifier} not found')
 
         password = data['password']
         if not user.check_password(password):

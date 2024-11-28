@@ -14,3 +14,19 @@ class Emotion(db.Model):
     surprise = db.Column(db.Boolean, default=False, nullable=False)
 
     entry = db.relationship("Entry", back_populates="emotions", lazy=True)
+
+    def to_list(self):
+        emotions_list = []
+        if self.love:
+            emotions_list.append("love")
+        if self.joy:
+            emotions_list.append("joy")
+        if self.sadness:
+            emotions_list.append("sadness")
+        if self.anger:
+            emotions_list.append("anger")
+        if self.fear:
+            emotions_list.append("fear")
+        if self.surprise:
+            emotions_list.append("surprise")
+        return emotions_list

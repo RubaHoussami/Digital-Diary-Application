@@ -16,3 +16,15 @@ class Event(db.Model):
     adjectives = db.Column(ARRAY(db.String), nullable=False, default=list)
 
     entry = db.relationship("Entry", back_populates="events", lazy=True)
+
+    def to_dict(self):
+        return {
+            "entry_id": self.entry_id,
+            "characters": self.characters,
+            "actions": self.actions,
+            "locations": self.locations,
+            "times": self.times,
+            "objects": self.objects,
+            "subjects": self.subjects,
+            "adjectives": self.adjectives,
+        }

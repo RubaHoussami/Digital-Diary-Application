@@ -1,12 +1,16 @@
 from flask import jsonify, Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from marshmallow import ValidationError
 from werkzeug.exceptions import NotFound
+from marshmallow import ValidationError
+
 from extensions import db
+
 from src.api.v1.services.entry_service import EntryService
 from src.api.v1.schemas.entry_schema import RegisterEntrySchema, GetEntryByIDSchema, AddToEntrySchema
 
+
 entry_bp = Blueprint('entry', __name__, url_prefix='/entries')
+
 
 @entry_bp.route('/register_entry', methods=['POST'])
 @jwt_required()
@@ -22,7 +26,7 @@ def register_entry():
     entry_service = EntryService(db_session=db.session)
     try:
         result = entry_service.register_entry(data, user_id)
-        return jsonify(result), 200
+        return jsonify(result), 201
     except NotFound as e:
         return jsonify({'message': str(e)}), 404
     except Exception as e:
@@ -77,7 +81,7 @@ def add_to_entry():
     entry_service = EntryService(db_session=db.session)
     try:
         result = entry_service.add_to_entry(data, entry_id, user_id)
-        return jsonify(result), 200
+        return jsonify(result), 201
     except NotFound as e:
         return jsonify({'message': str(e)}), 404
     except Exception as e:

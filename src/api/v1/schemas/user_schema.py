@@ -18,11 +18,5 @@ class RegisterSchema(Schema):
             raise ValidationError('User must be at least 18 years old.')
 
 class LoginSchema(Schema):
-    username = fields.Str(validate=validate.Length(min=1))
-    email = fields.Email()
+    identifier = fields.Str(validate=validate.Length(min=1))
     password = fields.Str(required=True, validate=validate.Length(min=6))
-
-    @validates_schema
-    def validate_login(data):
-        if not data.get('username') and not data.get('email'):
-            raise ValidationError('Either username or email must be provided.')

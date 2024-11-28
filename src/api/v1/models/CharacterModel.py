@@ -13,3 +13,13 @@ class CharacterTrait(db.Model):
     openness = db.Column(db.Float, nullable=False, min=0, max=100)
 
     entry = db.relationship("Entry", back_populates="character_traits", lazy=True)
+
+    def to_dict(self):
+        return {
+            "entry_id": self.entry_id,
+            "agreableness": self.agreableness,
+            "conscientiousness": self.conscientiousness,
+            "extraversion": self.extraversion,
+            "neuroticism": self.neuroticism,
+            "openness": self.openness,
+        }

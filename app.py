@@ -13,7 +13,7 @@ from src.api.v1.models.CharacterModel import CharacterTrait
 
 from src.api.v1.controllers.user_controller import user_bp
 from src.api.v1.controllers.entry_controller import entry_bp
-from src.api.v1.controllers.analysis_controller import analysis_bp
+from src.api.v1.controllers.data_controller import analysis_bp
 
 
 def create_app():
