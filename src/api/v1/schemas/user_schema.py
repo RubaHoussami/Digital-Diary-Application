@@ -11,12 +11,13 @@ class RegisterSchema(Schema):
     gender = fields.Str(required=True)
 
     @validates_schema
-    def validate_date_of_birth(date_of_birth):
+    def validate_date_of_birth(self, data, **kwargs):
+        date_of_birth = data.get('date_of_birth')
         today = datetime.today().date()
         age = today.year - date_of_birth.year - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
         if age < 18:
             raise ValidationError('User must be at least 18 years old.')
 
 class LoginSchema(Schema):
-    identifier = fields.Str(validate=validate.Length(min=1))
+    identifier = fields.Str(required=True, validate=validate.Length(min=1))
     password = fields.Str(required=True, validate=validate.Length(min=6))

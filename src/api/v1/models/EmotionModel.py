@@ -1,4 +1,4 @@
-from extensions import db
+from src.extensions import db
 
 class Emotion(db.Model):
     __tablename__ = "emotions"

@@ -13,7 +13,8 @@ from src.api.v1.models.CharacterModel import CharacterTrait
 
 from src.api.v1.controllers.user_controller import user_bp
 from src.api.v1.controllers.entry_controller import entry_bp
-from src.api.v1.controllers.data_controller import analysis_bp
+from src.api.v1.controllers.advice_controller import advice_bp
+from src.api.v1.controllers.data_controller import data_bp
 
 
 def create_app():
@@ -29,7 +30,8 @@ def create_app():
 
     app.register_blueprint(user_bp)
     app.register_blueprint(entry_bp)
-    app.register_blueprint(analysis_bp)
+    app.register_blueprint(advice_bp)
+    app.register_blueprint(data_bp)
     return app
 
 app = create_app()

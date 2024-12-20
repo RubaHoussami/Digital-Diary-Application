@@ -1,4 +1,4 @@
-from flask import BadRequest
+from werkzeug.exceptions import BadRequest
 from datetime import datetime, timedelta
 
 from src.api.v1.models.EmotionModel import Emotion
@@ -23,83 +23,158 @@ class DataService:
         self.character_extractor = CharacterExtractor()
         self.event_extractor = EventExtractor()
 
-    def get_emotions(self, entry):
+    def get_emotions(self, entry: Entry) -> Emotion:
         emotions = entry.emotions
         if not emotions:
-            emotions_map = self.emotion_extractor.extract(entry['title'], entry['context'])
+            emotions_map ={
+                'love': False,
+                'joy': False,
+                'sadness': False,
+                'anger': False,
+                'fear': False,
+                'surprise': False
+            }
+            text = entry.title + '\n' + entry.context
+            for i in range(0, len(text), 128):
+                if i + 128 < len(text):
+                    emotion = self.emotion_extractor.extract(text[i: i + 128])
+                elif len(text) - i > 100:
+                    emotion = self.emotion_extractor.extract(text[i:])
+                else:
+                    emotion = None
+                if emotion and emotion in emotions_map:
+                    emotions_map[emotion] = True
             emotions = Emotion(love=emotions_map['love'], joy=emotions_map['joy'], sadness=emotions_map['sadness'], anger=emotions_map['anger'], fear=emotions_map['fear'], surprise=emotions_map['surprise'], entry=entry)
             self.db_session.add(emotions)
             self.db_session.commit()
 
-        return emotions.to_list()
+        return emotions
     
-    def get_characters(self, entry):
+    def get_characters(self, entry: Entry) -> CharacterTrait:
         characters = entry.character_traits
         if not characters:
-            characters_map = self.character_extractor.extract(entry['title'], entry['context'])
-            characters = CharacterTrait(agreableness=characters_map['agreableness'], conscientiousness=characters_map['conscientiousness'], extraversion=characters_map['extraversion'], neuroticism=characters_map['neuroticism'], openness=characters_map['openness'], entry=entry)
+            characters_map ={
+                'agreableness': 0,
+                'conscientiousness': 0,
+                'extraversion': 0,
+                'neuroticism': 0,
+                'openness': 0
+            }
+            text = entry.title + '\n' + entry.context
+            for i in range(0, len(text), 128):
+                if i + 128 < len(text):
+                    characters_map = self.character_extractor.extract(text[i: i + 128])
+                    agreableness = characters_map['agreableness']
+                    conscientiousness = characters_map['conscientiousness']
+                    extraversion = characters_map['extraversion']
+                    neuroticism = characters_map['neuroticism']
+                    openness = characters_map['openness']
+                elif len(text) - i > 100:
+                    characters_map = self.character_extractor.extract(text[i:])
+                    agreableness = characters_map['agreableness']
+                    conscientiousness = characters_map['conscientiousness']
+                    extraversion = characters_map['extraversion']
+                    neuroticism = characters_map['neuroticism']
+                    openness = characters_map['openness']
+                else: 
+                    agreableness = 0
+                    conscientiousness = 0
+                    extraversion = 0
+                    neuroticism = 0
+                    openness = 0
+                characters_map['agreableness'] += agreableness
+                characters_map['conscientiousness'] += conscientiousness
+                characters_map['extraversion'] += extraversion
+                characters_map['neuroticism'] += neuroticism
+                characters_map['openness'] += openness
+            number = len(text) // 128
+            characters_map['agreableness'] = float(characters_map['agreableness']) / number
+            characters_map['conscientiousness'] = float(characters_map['conscientiousness']) / number
+            characters_map['extraversion'] = float(characters_map['extraversion']) / number
+            characters_map['neuroticism'] = float(characters_map['neuroticism']) / number
+            characters_map['openness'] = float(characters_map['openness']) / number
+            mbti_type = self.character_extractor.get_mbti_type(characters_map)
+            characters = CharacterTrait(agreableness=characters_map['agreableness'], conscientiousness=characters_map['conscientiousness'], extraversion=characters_map['extraversion'], neuroticism=characters_map['neuroticism'], openness=characters_map['openness'], mbti_type=mbti_type, entry=entry)
             self.db_session.add(characters)
             self.db_session.commit()
 
-        return characters.to_dict()
+        return characters
     
-    def get_events(self, entry):
+    def get_events(self, entry: Entry) -> list[Event]:
         events = entry.events
         if not events:
-            events_map = self.event_extractor.extract(entry['title'], entry['context'])
             events = []
-            for event in events_map:
-                single_event = Event(characters=event['characters'], actions=event['actions'], locations=event['locations'], times=event['times'], objects=event['objects'], subjects=event['subjects'], adjectives=event['adjectives'], entry=entry)
-                events.append(single_event)
-                self.db_session.add(single_event)
+            text = entry.title + '\n' + entry.context
+            for i in range(0, len(text), 128):
+                if i + 128 < len(text):
+                    extracted_event = self.event_extractor.extract(text[i: i + 128])
+                elif len(text) - i > 100:
+                    extracted_event = self.event_extractor.extract(text[i:])
+                else:
+                    extracted_event = None
+                if extracted_event:
+                    single_event = Event(characters=extracted_event['characters'], actions=extracted_event['actions'], times=extracted_event['times'], locations=extracted_event['locations'], objects=extracted_event['objects'], subjects=extracted_event['subjects'], adjectives=extracted_event['adjectives'], adverbs=extracted_event['adverbs'], topics=extracted_event['topics'], organizations=extracted_event['organizations'], events=extracted_event['events'], entry=entry)
+                    events.append(single_event)
+                    self.db_session.add(single_event)
             self.db_session.commit()
 
-        events_detected = [event.to_dict() for event in events]
-        return events_detected
-    
-    def get_entry_emotions(self, entry_id, user_id):
+        return events
+
+    def get_entry_emotions(self, entry_id: int, user_id: int) -> dict[str, list]:
         entry = self.entry_service.get_user_entry(entry_id, user_id)
-        emotions_detected = self.get_emotions(entry)
+        emotions = self.get_emotions(entry)
+        emotions_detected = emotions.to_list()
         return {'emotions': emotions_detected}
 
-    def get_entry_characters(self, entry_id, user_id):
+    def get_entry_characters(self, entry_id: int, user_id: int) -> dict[str, dict[str, float]]:
         entry = self.entry_service.get_user_entry(entry_id, user_id)
-        characters_detected = self.get_characters(entry)
+        characters = self.get_characters(entry)
+        characters_detected = characters.to_dict()
         return {'characters': characters_detected}
-
-    def get_entry_events(self, entry_id, user_id):
+    
+    def get_entry_mbti(self, entry_id: int, user_id: int) -> dict[str, str]:
         entry = self.entry_service.get_user_entry(entry_id, user_id)
-        events_detected = self.get_events(entry)
+        characters = self.get_characters(entry)
+        mbti_type = characters.mbti_type
+        return {'mbti_type': mbti_type}
+
+    def get_entry_events(self, entry_id: int, user_id: int) -> dict[str, list[str]]:
+        entry = self.entry_service.get_user_entry(entry_id, user_id)
+        events = self.get_events(entry)
+        events_detected = [event.to_string() for event in events]
         return {'events': events_detected}
 
-    def get_entry_summary(self, entry_id, user_id):
+    def get_entry_summary(self, entry_id: int, user_id: int) -> dict[str, dict[str, list[str]]]:
         entry = self.entry_service.get_user_entry(entry_id, user_id)
-        emotions_detected = self.get_emotions(entry)
-        characters_detected = self.get_characters(entry)
-        events_detected = self.get_events(entry)
+        emotions = self.get_emotions(entry)
+        characters = self.get_characters(entry)
+        events = self.get_events(entry)
         return {
-            'emotions': emotions_detected,
-            'characters': characters_detected,
-            'events': events_detected
+            'emotions': emotions.to_list(),
+            'characters': characters.to_dict(),
+            'events': [event.to_string() for event in events]
         }
-    
-    def get_entries_by_date_range(self, start_date, end_date, user_id):
+
+    def get_entries_by_date_range(self, start_date: datetime, end_date: datetime, user_id: int) -> list[Entry]:
         return Entry.query.filter(Entry.created_at.between(start_date, end_date), Entry.user_id == user_id).all()
-    
-    def get_week_emotions_by_date_range(self, start_date, end_date, user_id):
+
+    def get_week_emotions_by_date_range(self, start_date: datetime, end_date: datetime, user_id: int) -> dict[int, list[str]]:
         entries = self.get_entries_by_date_range(start_date, end_date, user_id)
 
-        week_emotions = {day: [] for day in range(1, 8)}
+        week_emotions = {day: set() for day in range(1, 8)}
 
         for entry in entries:
             day_of_week = entry.created_at.isoweekday()
             emotions = self.get_emotions(entry)
-            week_emotions[day_of_week].extend(emotions)
+            week_emotions[day_of_week].update(emotions.to_list())
+        
+        for day in week_emotions:
+            week_emotions[day] = list(week_emotions[day])
         
         return week_emotions
-    
-    def get_month_emotions_by_date_range(self, start_date, end_date, user_id):
-        month_emotions = {day: [] for day in range(1, 32)}
+
+    def get_month_emotions_by_date_range(self, start_date: datetime, end_date: datetime, user_id: int) -> dict[int, list[str]]:
+        month_emotions = {day: set() for day in range(1, 32)}
 
         week_start = start_date
         while week_start <= end_date:
@@ -112,14 +187,17 @@ class DataService:
 
             for day, emotions in week_emotions.items():
                 actual_day = (week_start + timedelta(days=day - 1)).day
-                month_emotions[actual_day].extend(emotions)
+                month_emotions[actual_day].update(emotions)
 
             week_start = week_end + timedelta(days=1)
+        
+        for day in month_emotions:
+            month_emotions[day] = list(month_emotions[day])
 
         return month_emotions
-    
-    def get_year_emotions_by_date_range(self, start_date, end_date, user_id):
-        year_emotions = {month: {day: [] for day in range(1, 32)} for month in range(1, 13)}
+
+    def get_year_emotions_by_date_range(self, start_date: datetime, end_date: datetime, user_id: int) -> dict[int, dict[int, list[str]]]:
+        year_emotions = {month: {day: set() for day in range(1, 32)} for month in range(1, 13)}
 
         month_start = start_date
         while month_start <= end_date:
@@ -133,13 +211,17 @@ class DataService:
             month_emotions = self.get_month_emotions_by_date_range(month_start, month_end, user_id)
 
             for day, emotions in month_emotions.items():
-                year_emotions[month_start.month][day].extend(emotions)
+                year_emotions[month_start.month][day].update(emotions)
 
             month_start = month_end + timedelta(days=1)
+        
+        for month in year_emotions:
+            for day in year_emotions[month]:
+                year_emotions[month][day] = list(year_emotions[month][day])
 
         return year_emotions
 
-    def get_week_emotions(self, data, user_id):
+    def get_week_emotions(self, data: dict[str, int], user_id: int) -> dict[int, list[str]]:
         user = self.user_service.get_user(user_id)
         week = data['week']
         year = data['year']
@@ -152,7 +234,7 @@ class DataService:
         emotions = self.get_week_emotions_by_date_range(start_date, end_date, user_id)
         return {'emotions': emotions}
 
-    def get_month_emotions(self, data, user_id):
+    def get_month_emotions(self, data: dict[str, int], user_id: int) -> dict[int, list[str]]:
         user = self.user_service.get_user(user_id)
         month = data['month']
         year = data['year']
@@ -165,7 +247,7 @@ class DataService:
         emotions = self.get_month_emotions_by_date_range(start_date, end_date, user_id)
         return {'emotions': emotions}
 
-    def get_year_emotions(self, data, user_id):
+    def get_year_emotions(self, data: dict[str, int], user_id: int) -> dict[int, dict[int, list[str]]]:
         user = self.user_service.get_user(user_id)
         year = data['year']
         start_date = datetime(year, 1, 1)
@@ -176,8 +258,8 @@ class DataService:
 
         emotions = self.get_year_emotions_by_date_range(start_date, end_date, user_id)
         return {'emotions': emotions}
-        
-    def get_week_characters_by_date_range(self, start_date, end_date, user_id):
+
+    def get_week_characters_by_date_range(self, start_date: datetime, end_date: datetime, user_id: int) -> dict[int, dict[str, float]]:
         entries = self.get_entries_by_date_range(start_date, end_date, user_id)
 
         week_characters = {day: {} for day in range(1, 8)}
@@ -185,11 +267,14 @@ class DataService:
         for entry in entries:
             day_of_week = entry.created_at.isoweekday()
             characters = self.get_characters(entry)
-            week_characters[day_of_week] = characters
+            week_characters[day_of_week] = characters.to_dict()
+        
+        for day in week_characters:
+            week_characters[day] = characters.to_dict()
 
         return week_characters
 
-    def get_month_characters_by_date_range(self, start_date, end_date, user_id):
+    def get_month_characters_by_date_range(self, start_date: datetime, end_date: datetime, user_id: int) -> dict[int, dict[str, float]]:
         month_characters = {day: {} for day in range(1, 32)}
 
         week_start = start_date
@@ -203,13 +288,13 @@ class DataService:
 
             for day, characters in week_characters.items():
                 actual_day = (week_start + timedelta(days=day - 1)).day
-                month_characters[actual_day] = characters
+                month_characters[actual_day] = characters.to_dict()
 
             week_start = week_end + timedelta(days=1)
 
         return month_characters
 
-    def get_year_characters_by_date_range(self, start_date, end_date, user_id):
+    def get_year_characters_by_date_range(self, start_date: datetime, end_date: datetime, user_id: int) -> dict[int, dict[int, dict[str, float]]]:
         year_characters = {month: {day: {} for day in range(1, 32)} for month in range(1, 13)}
 
         month_start = start_date
@@ -224,13 +309,13 @@ class DataService:
             month_characters = self.get_month_characters_by_date_range(month_start, month_end, user_id)
 
             for day, characters in month_characters.items():
-                year_characters[month_start.month][day] = characters
+                year_characters[month_start.month][day] = characters.to_dict()
 
             month_start = month_end + timedelta(days=1)
 
         return year_characters
 
-    def get_week_characters(self, data, user_id):
+    def get_week_characters(self, data: dict[str, int], user_id: int) -> dict[int, dict[str, float]]:
         user = self.user_service.get_user(user_id)
         week = data['week']
         year = data['year']
@@ -243,7 +328,7 @@ class DataService:
         characters = self.get_week_characters_by_date_range(start_date, end_date, user_id)
         return {'characters': characters}
 
-    def get_month_characters(self, data, user_id):
+    def get_month_characters(self, data: dict[str, int], user_id: int) -> dict[int, dict[str, float]]:
         user = self.user_service.get_user(user_id)
         month = data['month']
         year = data['year']
@@ -256,7 +341,7 @@ class DataService:
         characters = self.get_month_characters_by_date_range(start_date, end_date, user_id)
         return {'characters': characters}
 
-    def get_year_characters(self, data, user_id):
+    def get_year_characters(self, data: dict[str, int], user_id: int) -> dict[int, dict[int, dict[str, float]]]:
         user = self.user_service.get_user(user_id)
         year = data['year']
         start_date = datetime(year, 1, 1)
@@ -267,8 +352,8 @@ class DataService:
 
         characters = self.get_year_characters_by_date_range(start_date, end_date, user_id)
         return {'characters': characters}
-    
-    def get_week_summary(self, data, user_id):
+
+    def get_week_summary(self, data: dict[str, int], user_id: int) -> dict[str, dict[str, list[str]]]:
         user = self.user_service.get_user(user_id)
         week = data['week']
         year = data['year']
@@ -283,7 +368,7 @@ class DataService:
 
         return {'emotions': emotions, 'characters': characters}
 
-    def get_month_summary(self, data, user_id):
+    def get_month_summary(self, data: dict[str, int], user_id: int) -> dict[str, dict[str, list[str]]]:
         user = self.user_service.get_user(user_id)
         month = data['month']
         year = data['year']
@@ -298,7 +383,7 @@ class DataService:
 
         return {'emotions': emotions, 'characters': characters}
 
-    def get_year_summary(self, data, user_id):
+    def get_year_summary(self, data: dict[str, int], user_id: int) -> dict[str, dict[str, list[str]]]:
         user = self.user_service.get_user(user_id)
         year = data['year']
         start_date = datetime(year, 1, 1)
@@ -311,8 +396,8 @@ class DataService:
         characters = self.get_year_characters_by_date_range(start_date, end_date, user_id)
 
         return {'emotions': emotions, 'characters': characters}
-    
-    def get_week_events_by_date_range(self, start_date, end_date, user_id):
+
+    def get_week_events_by_date_range(self, start_date: datetime, end_date: datetime, user_id: int) -> dict[int, list[str]]:
         entries = self.get_entries_by_date_range(start_date, end_date, user_id)
 
         week_events = {day: [] for day in range(1, 8)}
@@ -320,11 +405,11 @@ class DataService:
         for entry in entries:
             day_of_week = entry.created_at.isoweekday()
             events = self.get_events(entry)
-            week_events[day_of_week].extend(events)
+            week_events[day_of_week].extend([event.to_string() for event in events])
 
         return week_events
 
-    def get_month_events_by_date_range(self, start_date, end_date, user_id):
+    def get_month_events_by_date_range(self, start_date: datetime, end_date: datetime, user_id: int) -> dict[int, list[str]]:
         month_events = {day: [] for day in range(1, 32)}
 
         week_start = start_date
@@ -338,14 +423,13 @@ class DataService:
 
             for day, events in week_events.items():
                 actual_day = (week_start + timedelta(days=day - 1)).day
-                month_events[actual_day].extend(events)
+                month_events[actual_day].extend([event.to_string() for event in events])
 
             week_start = week_end + timedelta(days=1)
 
         return month_events
 
-
-    def get_year_events_by_date_range(self, start_date, end_date, user_id):
+    def get_year_events_by_date_range(self, start_date: datetime, end_date: datetime, user_id: int) -> dict[int, dict[int, list[str]]]:
         year_events = {month: {day: [] for day in range(1, 32)} for month in range(1, 13)}
 
         month_start = start_date
@@ -360,7 +444,7 @@ class DataService:
             month_events = self.get_month_events_by_date_range(month_start, month_end, user_id)
 
             for day, events in month_events.items():
-                year_events[month_start.month][day].extend(events)
+                year_events[month_start.month][day].extend([event.to_string() for event in events])
 
             month_start = month_end + timedelta(days=1)
 

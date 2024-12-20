@@ -2,7 +2,7 @@ from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
-from swagger import Swagger
+from flasgger import Swagger
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -14,5 +14,13 @@ swagger = Swagger(template={
         "title": "Digital Diary Application",
         "description": "A smart digital diary for your daily updates",
         "version": "0.0.1",
+    },
+    "securityDefinitions": {
+        "jwt": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Enter your Bearer token in the format **Bearer {token}**"
+        }
     }
 })

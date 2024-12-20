@@ -1,5 +1,5 @@
 from werkzeug.security import generate_password_hash, check_password_hash
-from extensions import db
+from src.extensions import db
 from src.api.v1.models.BaseModel import BaseModel
 
 class User(BaseModel, db.Model):
@@ -17,6 +17,7 @@ class User(BaseModel, db.Model):
     last_logout = db.Column(db.DateTime, nullable=True)
 
     entries = db.relationship("Entry", back_populates="user", lazy=True)
+    advice = db.relationship("Advice", back_populates="user", lazy=True)
 
     def set_password(self, password: str) -> None:
         self.password = generate_password_hash(password)

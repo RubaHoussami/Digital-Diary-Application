@@ -57,8 +57,8 @@ class UserService:
         self.db_session.add(user)
         self.db_session.commit()
 
-        access_token = create_access_token(identity=user.id)
-        refresh_token = create_refresh_token(identity=user.id)
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
 
         return {'access': access_token, 'refresh': refresh_token}
 
@@ -75,8 +75,8 @@ class UserService:
         if not user.check_password(password):
             raise Unauthorized(f'Invalid password for user with identifier {identifier}')
 
-        access_token = create_access_token(identity=user.id)
-        refresh_token = create_refresh_token(identity=user.id)
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
 
         return {'access': access_token, 'refresh': refresh_token}
     
@@ -88,8 +88,8 @@ class UserService:
 
     def refresh(self, user_id):
         user = self.get_user_by_id(user_id)
-        access_token = create_access_token(identity=user.id)
-        refresh_token = create_refresh_token(identity=user.id)
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
         return {'access': access_token, 'refresh': refresh_token}
 
     def get_user_info(self, user_id):

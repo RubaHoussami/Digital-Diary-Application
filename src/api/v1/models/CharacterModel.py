@@ -1,4 +1,4 @@
-from extensions import db
+from src.extensions import db
 
 class CharacterTrait(db.Model):
     __tablename__ = "character_traits"
@@ -6,17 +6,17 @@ class CharacterTrait(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     entry_id = db.Column(db.Integer, db.ForeignKey("entries.id"), nullable=False)
 
-    agreableness = db.Column(db.Float, nullable=False, min=0, max=100)
-    conscientiousness = db.Column(db.Float, nullable=False, min=0, max=100)
-    extraversion = db.Column(db.Float, nullable=False, min=0, max=100)
-    neuroticism = db.Column(db.Float, nullable=False, min=0, max=100)
-    openness = db.Column(db.Float, nullable=False, min=0, max=100)
+    agreableness = db.Column(db.Float, nullable=False)
+    conscientiousness = db.Column(db.Float, nullable=False)
+    extraversion = db.Column(db.Float, nullable=False)
+    neuroticism = db.Column(db.Float, nullable=False)
+    openness = db.Column(db.Float, nullable=False)
+    mbti_type = db.Column(db.String(4), nullable=False)
 
     entry = db.relationship("Entry", back_populates="character_traits", lazy=True)
 
     def to_dict(self):
         return {
-            "entry_id": self.entry_id,
             "agreableness": self.agreableness,
             "conscientiousness": self.conscientiousness,
             "extraversion": self.extraversion,

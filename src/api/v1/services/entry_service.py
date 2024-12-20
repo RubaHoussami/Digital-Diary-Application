@@ -1,14 +1,15 @@
 from werkzeug.exceptions import NotFound
 
 from src.api.v1.models.EntryModel import Entry
-
 from src.api.v1.services.user_service import UserService
+from src.crew.active.data_sanitizer import DataSanitizer
 
 
 class EntryService:
     def __init__(self, db_session):
         self.db_session = db_session
         self.user_service = UserService(db_session=db_session)
+        self.data_sanitizer = DataSanitizer()
     
     def get_entry_by_id(self, id, user_id):
         return Entry.query.filter_by(id=id, user_id=user_id).first()
@@ -39,9 +40,9 @@ class EntryService:
 
     def register_entry(self, data, user_id):
         title = data['title']
-        title = title.strip()
+        title = self.data_sanitizer.sanitize(title)
         context = data['context']
-        context = context.strip()
+        context = self.data_sanitizer.sanitize(context)
         user = self.user_service.get_user_by_id(user_id)
         entry = Entry(title=title, context=context, user=user)
         self.db_session.add(entry)
@@ -50,7 +51,7 @@ class EntryService:
 
     def add_to_entry(self, data, entry_id, user_id):
         context = data['context']
-        context = context.strip()
+        context = self.data_sanitizer.sanitize(context)
         entry = self.get_user_entry_by_id(entry_id, user_id)
         entry.context += context
         self.db_session.commit()
