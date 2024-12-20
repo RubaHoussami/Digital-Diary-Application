@@ -84,6 +84,7 @@ python app.py
    Use the Swagger interface to add diary entries, extract insights, and receive personalized advice.
 
 ## Project Structure
+```bash
 Digital-Diary-Application/
 ├── local_datasets/         # Directory for storing any local datasets
 ├── model_training/         # Files used for fine-tuning the models
@@ -105,8 +106,9 @@ Digital-Diary-Application/
 ├── requirements.txt        # Python dependencies
 ├── app.py                  # Flask application entry point
 ├── .env.example            # Example environment configuration file
+├── LICENSE                 # Project License
 └── README.md               # Project documentation
-
+```
 
 ## License
 
