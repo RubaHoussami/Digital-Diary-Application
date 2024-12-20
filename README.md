@@ -86,28 +86,32 @@ python app.py
 ## Project Structure
 ```bash
 Digital-Diary-Application/
-├── local_datasets/         # Directory for storing any local datasets
-├── model_training/         # Files used for fine-tuning the models
+├── local_datasets/               # Directory for storing any local datasets
+├── model_training/               # Files used for fine-tuning the models
 ├── src/
-│   ├── models/             # Directory for storing pre-trained fine-tuned models and tokenizers
+│   ├── models/                   # Directory for storing pre-trained fine-tuned models and tokenizers
+│   │   ├── advisor_model/        # Directory to store the advisor model and its tokenizer
+│   │   ├── character_extractor/  # Directory to store the character extractor model and its tokenizer
+│   │   ├── emotion_extractor/    # Directory to store the emotion extractor model and its tokenizer
+│   │   ├── event_extractor/      # Directory to store the event extractor model and its tokenizer
 │   ├── crew/
-│   │   ├── active/         # Classes for extractors and sanitizers
-│   │   ├── base/           # Base classes for extractors and sanitizers
+│   │   ├── active/               # Classes for extractors and sanitizers
+│   │   ├── base/                 # Base classes for extractors and sanitizers
 │   ├── api/v1/
-│   │   ├── controllers/    # API endpoints documented with Swagger
-│   │   ├── models/         # SQLAlchemy database models
-│   │   ├── schemas/        # Marshmallow schemas for validation
-│   │   ├── services/       # Core functions for endpoints
-│   │   ├── utils/          # Utility scripts used across the application
-│   ├── errors.py           # Custom error handling
-│   ├── extensions.py       # JWT manager and database setup
-│   ├── logger.py           # Logger configuration
-│   ├── logout_management.py# Token management for user logout
-├── requirements.txt        # Python dependencies
-├── app.py                  # Flask application entry point
-├── .env.example            # Example environment configuration file
-├── LICENSE                 # Project License
-└── README.md               # Project documentation
+│   │   ├── controllers/          # API endpoints documented with Swagger
+│   │   ├── models/               # SQLAlchemy database models
+│   │   ├── schemas/              # Marshmallow schemas for validation
+│   │   ├── services/             # Core functions for endpoints
+│   │   ├── utils/                # Utility scripts used across the application
+│   ├── errors.py                 # Custom error handling
+│   ├── extensions.py             # JWT manager and database setup
+│   ├── logger.py                 # Logger configuration
+│   ├── logout_management.py      # Token management for user logout
+├── requirements.txt              # Python dependencies
+├── app.py                        # Flask application entry point
+├── .env.example                  # Example environment configuration file
+├── LICENSE                       # Project License
+└── README.md                     # Project documentation
 ```
 
 ## License
